@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>幽ノ紀 オラクルカード</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@300;400&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Noto Serif JP', 'Hiragino Mincho ProN', serif;
+      background: #06060f;
+      position: relative;
+      overflow: hidden;
+      padding: 20px;
+      transition: background 0.8s ease;
+    }
+
+    @keyframes float {
+      from { transform: translateY(0) scale(1); }
+      to   { transform: translateY(-12px) scale(1.1); }
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(16px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes flipIn {
+      from { transform: rotateY(90deg); opacity: 0; }
+      to   { transform: rotateY(0deg);  opacity: 1; }
+    }
+    @keyframes shimmer {
+      0%, 100% { opacity: 0.4; }
+      50%       { opacity: 0.9; }
+    }
+    @keyframes pulse-shadow {
+      0%, 100% { box-shadow: var(--pulse-shadow-min); }
+      50%       { box-shadow: var(--pulse-shadow-max); }
+    }
+
+    #border-top, #border-bottom {
+      position: fixed;
+      left: 0; right: 0;
+      height: 2px;
+      transition: background 0.8s;
+    }
+    #border-top    { top: 0; }
+    #border-bottom { bottom: 0; }
+
+    #particles {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+    }
+    .particle {
+      position: absolute;
+      border-radius: 50%;
+      animation: float linear infinite alternate;
+    }
+
+    #app {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 100%;
+      max-width: 400px;
+    }
+
+    /* Title */
+    #title-area {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+    #title-label {
+      font-size: 11px;
+      letter-spacing: 0.5em;
+      opacity: 0.7;
+      margin-bottom: 8px;
+      text-transform: uppercase;
+      transition: color 0.8s;
+    }
+    #title-main {
+      color: #e8d8b0;
+      font-size: clamp(22px, 5vw, 32px);
+      font-weight: 300;
+      letter-spacing: 0.3em;
+    }
+
+    /* Card area */
+    #card-area {
+      width: clamp(260px, 80vw, 340px);
+      margin-bottom: 32px;
+    }
+
+    /* Idle card (back face) */
+    #idle-card {
+      width: 100%;
+      aspect-ratio: 9/16;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+      transition: border-color 0.3s;
+    }
+    #idle-card .corner {
+      position: absolute;
+      width: 20px;
+      height: 20px;
+    }
+    #idle-card .corner.tl { top: 12px; left: 12px;  border-top: 1px solid; border-left: 1px solid; }
+    #idle-card .corner.tr { top: 12px; right: 12px; border-top: 1px solid; border-right: 1px solid; }
+    #idle-card .corner.bl { bottom: 12px; left: 12px;  border-bottom: 1px solid; border-left: 1px solid; }
+    #idle-card .corner.br { bottom: 12px; right: 12px; border-bottom: 1px solid; border-right: 1px solid; }
+    #idle-icon {
+      font-size: 32px;
+      margin-bottom: 16px;
+      animation: shimmer 2.5s ease-in-out infinite;
+    }
+    #idle-text {
+      color: #e8d8b0;
+      font-size: 13px;
+      letter-spacing: 0.3em;
+      opacity: 0.6;
+    }
+
+    /* Flipping */
+    #flip-card {
+      width: 100%;
+      aspect-ratio: 9/16;
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 10px;
+      background: rgba(255,255,255,0.03);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    #flip-icon {
+      font-size: 24px;
+      opacity: 0.5;
+      animation: float 0.5s ease infinite;
+    }
+
+    /* Revealed card */
+    #card-wrap {
+      width: 100%;
+      animation: flipIn 0.5s ease forwards;
+    }
+    #revealed-card {
+      width: 100%;
+      aspect-ratio: 9/16;
+      border-radius: 10px;
+      position: relative;
+      overflow: hidden;
+      animation: pulse-shadow 3s ease-in-out infinite;
+    }
+    #card-glow {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+    }
+    #card-inner-border {
+      position: absolute;
+      inset: 8px;
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 6px;
+      pointer-events: none;
+    }
+    .card-corner {
+      position: absolute;
+      width: 24px;
+      height: 24px;
+    }
+    .card-corner.tl { top: 8px; left: 8px;   border-top: 1px solid; border-left: 1px solid;   border-radius: 3px 0 0 0; }
+    .card-corner.tr { top: 8px; right: 8px;  border-top: 1px solid; border-right: 1px solid;  border-radius: 0 3px 0 0; }
+    .card-corner.bl { bottom: 8px; left: 8px;  border-bottom: 1px solid; border-left: 1px solid;  border-radius: 0 0 0 3px; }
+    .card-corner.br { bottom: 8px; right: 8px; border-bottom: 1px solid; border-right: 1px solid; border-radius: 0 0 3px 0; }
+
+    #card-name-area {
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      padding-top: 24px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 10px;
+      z-index: 2;
+    }
+    #card-name-text {
+      font-size: clamp(24px, 7vw, 36px);
+      font-weight: 300;
+      color: #f0d88a;
+      letter-spacing: 0.35em;
+      white-space: nowrap;
+    }
+
+    #card-illustration {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    #card-animal-bg {
+      font-size: 52px;
+      opacity: 0.12;
+    }
+
+    #card-bottom {
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      padding-bottom: 18px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      z-index: 2;
+    }
+    #card-continent {
+      font-size: 8px;
+      letter-spacing: 0.3em;
+      opacity: 0.5;
+      margin-top: 4px;
+    }
+
+    /* Below card */
+    #below-card {
+      margin-top: 20px;
+      padding: 0 8px;
+      animation: fadeIn 0.6s ease 0.3s both;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 14px;
+    }
+    #below-name-area {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+    }
+    #below-name-text {
+      font-size: clamp(20px, 5.5vw, 28px);
+      font-weight: 300;
+      color: #f0d88a;
+      letter-spacing: 0.45em;
+    }
+    #card-message {
+      color: #c8b890;
+      font-size: clamp(12px, 2.8vw, 14px);
+      line-height: 2;
+      letter-spacing: 0.06em;
+      text-align: center;
+      font-weight: 300;
+    }
+
+    /* Buttons */
+    #btn-area { margin-top: 0; }
+    .draw-btn {
+      background: transparent;
+      border-radius: 30px;
+      font-family: inherit;
+      cursor: pointer;
+      transition: transform 0.2s ease;
+      letter-spacing: 0.35em;
+    }
+    .draw-btn:hover  { transform: scale(1.04); }
+    .draw-btn:active { transform: scale(0.97); }
+    #btn-draw {
+      font-size: 13px;
+      padding: 12px 36px;
+    }
+    #btn-reset {
+      font-size: 12px;
+      padding: 10px 28px;
+      letter-spacing: 0.3em;
+      opacity: 0.7;
+    }
+
+    #card-count {
+      position: fixed;
+      bottom: 16px;
+      font-size: 10px;
+      letter-spacing: 0.2em;
+      color: rgba(96,80,64,0.2);
+      z-index: 1;
+    }
+
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+
+  <div id="border-top"></div>
+  <div id="border-bottom"></div>
+  <div id="particles"></div>
+
+  <div id="app">
+    <!-- Title -->
+    <div id="title-area">
+      <div id="title-label">ORACLE CARD</div>
+      <h1 id="title-main">幽 ノ 紀</h1>
+    </div>
+
+    <!-- Card area -->
+    <div id="card-area">
+
+      <!-- Idle -->
+      <div id="idle-card" onclick="drawCard()">
+        <div class="corner tl"></div>
+        <div class="corner tr"></div>
+        <div class="corner bl"></div>
+        <div class="corner br"></div>
+        <div style="text-align:center">
+          <div id="idle-icon">✦</div>
+          <div id="idle-text">カードを引く</div>
+        </div>
+      </div>
+
+      <!-- Flipping -->
+      <div id="flip-card" class="hidden">
+        <div id="flip-icon">✦</div>
+      </div>
+
+      <!-- Revealed -->
+      <div id="card-wrap" class="hidden">
+        <div id="revealed-card">
+          <div id="card-glow"></div>
+          <div id="card-inner-border"></div>
+          <div class="card-corner tl"></div>
+          <div class="card-corner tr"></div>
+          <div class="card-corner bl"></div>
+          <div class="card-corner br"></div>
+
+          <!-- Card name with side decorations -->
+          <div id="card-name-area">
+            <svg id="deco-left" width="38" height="12" viewBox="0 0 38 12" style="opacity:0.75;flex-shrink:0">
+              <line x1="0" y1="6" x2="26" y2="6" stroke-width="0.6"/>
+              <path d="M28 6 Q32 2 36 6 Q32 10 28 6Z" opacity="0.85"/>
+            </svg>
+            <div id="card-name-text"></div>
+            <svg id="deco-right" width="38" height="12" viewBox="0 0 38 12" style="opacity:0.75;flex-shrink:0">
+              <line x1="12" y1="6" x2="38" y2="6" stroke-width="0.6"/>
+              <path d="M10 6 Q6 2 2 6 Q6 10 10 6Z" opacity="0.85"/>
+            </svg>
+          </div>
+
+          <!-- Illustration area -->
+          <div id="card-illustration">
+            <div id="card-animal-bg"></div>
+          </div>
+
+          <!-- Bottom compass -->
+          <div id="card-bottom">
+            <svg width="20" height="20" viewBox="0 0 20 20" id="compass-svg" style="opacity:0.4">
+              <circle cx="10" cy="10" r="9" fill="none" stroke-width="0.8"/>
+              <circle cx="10" cy="10" r="1.5"/>
+              <line x1="10" y1="1.5" x2="10" y2="5" stroke-width="1"/>
+              <line x1="10" y1="15" x2="10" y2="18.5" stroke-width="1"/>
+              <line x1="1.5" y1="10" x2="5" y2="10" stroke-width="1"/>
+              <line x1="15" y1="10" x2="18.5" y2="10" stroke-width="1"/>
+              <polygon points="10,3 9,7 11,7" opacity="0.9"/>
+            </svg>
+            <div id="card-continent"></div>
+          </div>
+        </div>
+
+        <!-- Below card -->
+        <div id="below-card">
+          <div id="below-name-area">
+            <div id="below-name-text"></div>
+            <svg width="160" height="14" viewBox="0 0 160 14" id="ornament-svg" style="opacity:0.75">
+              <line x1="0" y1="7" x2="52" y2="7" stroke-width="0.5" opacity="0.6"/>
+              <path d="M56 7 Q60 3 64 7 Q68 11 72 7 Q76 3 80 7 Q84 11 88 7 Q92 3 96 7 Q100 11 104 7" fill="none" stroke-width="0.8"/>
+              <line x1="108" y1="7" x2="160" y2="7" stroke-width="0.5" opacity="0.6"/>
+              <circle cx="80" cy="7" r="1.5" opacity="0.9"/>
+              <circle cx="56" cy="7" r="1" opacity="0.6"/>
+              <circle cx="104" cy="7" r="1" opacity="0.6"/>
+            </svg>
+          </div>
+          <p id="card-message"></p>
+        </div>
+      </div>
+
+    </div><!-- /card-area -->
+
+    <!-- Buttons -->
+    <div id="btn-area">
+      <button id="btn-draw" class="draw-btn" onclick="drawCard()">✦ カードを引く ✦</button>
+      <button id="btn-reset" class="draw-btn hidden" onclick="resetCard()">もう一枚引く</button>
+    </div>
+  </div>
+
+  <div id="card-count">38枚</div>
+
+  <script>
+  const CARDS = [
+    { id:1,  continent:"蒼海の研究廊", type:"場面", name:"暗流",    animal:"クラゲ",    act:"脱フュージョン", bg:"#040f18", accent:"#2a8fa8", glow:"#1a6a82", emoji:"🪼", message:"深海の奥に、重い流れがある。今日は、それに気づいただけでいい。" },
+    { id:2,  continent:"蒼海の研究廊", type:"場面", name:"濁流",    animal:"クラゲ",    act:"脱フュージョン", bg:"#040f18", accent:"#2a8fa8", glow:"#1a6a82", emoji:"🪼", message:"今、水が濁っている。見えないのは、あなたのせいではない。" },
+    { id:3,  continent:"蒼海の研究廊", type:"場面", name:"静海",    animal:"クラゲ",    act:"脱フュージョン", bg:"#040f18", accent:"#2a8fa8", glow:"#1a6a82", emoji:"🪼", message:"波立つ思考の下に、まだ静かな海が残っている。" },
+    { id:4,  continent:"蒼海の研究廊", type:"場面", name:"乱流",    animal:"クラゲ",    act:"脱フュージョン", bg:"#040f18", accent:"#2a8fa8", glow:"#1a6a82", emoji:"🪼", message:"渦を巻いて、行き先が見えない。それでもクラゲは、漂える。" },
+    { id:5,  continent:"蒼海の研究廊", type:"段階", name:"海音",    animal:"クラゲ",    act:"脱フュージョン", bg:"#040f18", accent:"#2a8fa8", glow:"#1a6a82", emoji:"🪼", message:"遠くから、音が響いている。耳を澄ませば、かすかに届く。" },
+    { id:6,  continent:"蒼海の研究廊", type:"段階", name:"観測",    animal:"クラゲ",    act:"脱フュージョン", bg:"#040f18", accent:"#2a8fa8", glow:"#1a6a82", emoji:"🪼", message:"研究者のように、少し離れて見てみる。それは、あなたそのものではない。" },
+    { id:7,  continent:"蒼海の研究廊", type:"段階", name:"放流",    animal:"クラゲ",    act:"脱フュージョン", bg:"#040f18", accent:"#2a8fa8", glow:"#1a6a82", emoji:"🪼", message:"流れに、そっと手放す。戻ってきたら、また流せばいい。" },
+    { id:8,  continent:"古層機遺宮",   type:"場面", name:"沈下",    animal:"モグラ",    act:"価値",          bg:"#160a04", accent:"#c47830", glow:"#8a5020", emoji:"🐾", message:"じわじわと、沈んでいる。それでも、地盤はまだここにある。" },
+    { id:9,  continent:"古層機遺宮",   type:"場面", name:"崩壊",    animal:"モグラ",    act:"価値",          bg:"#160a04", accent:"#c47830", glow:"#8a5020", emoji:"🐾", message:"崩れている。あなたが壊れたのではない。古い層が、更新されている。" },
+    { id:10, continent:"古層機遺宮",   type:"場面", name:"礎",      animal:"モグラ",    act:"価値",          bg:"#160a04", accent:"#c47830", glow:"#8a5020", emoji:"🐾", message:"土台は、ここにある。ずっと前から、あなたの下にあった。" },
+    { id:11, continent:"古層機遺宮",   type:"場面", name:"迷坑",    animal:"モグラ",    act:"価値",          bg:"#160a04", accent:"#c47830", glow:"#8a5020", emoji:"🐾", message:"道は、まだ見えない。それでも、掘り続けた跡は残っている。" },
+    { id:12, continent:"古層機遺宮",   type:"段階", name:"震動",    animal:"モグラ",    act:"価値",          bg:"#160a04", accent:"#c47830", glow:"#8a5020", emoji:"🐾", message:"地の底から、何かが伝わってくる。それに気づいた。それでいい。" },
+    { id:13, continent:"古層機遺宮",   type:"段階", name:"測量",    animal:"モグラ",    act:"価値",          bg:"#160a04", accent:"#c47830", glow:"#8a5020", emoji:"🐾", message:"少し離れて、測り直す。視点が、変わるかもしれない。" },
+    { id:14, continent:"古層機遺宮",   type:"段階", name:"砂塵",    animal:"モグラ",    act:"価値",          bg:"#160a04", accent:"#c47830", glow:"#8a5020", emoji:"🐾", message:"砂が、風に舞っている。握りしめなくていい。いつか、土に還っていく。" },
+    { id:15, continent:"翠鐘樹の塔",   type:"場面", name:"枯葉",    animal:"フクロウ",  act:"今ここ",        bg:"#071a0f", accent:"#55a06a", glow:"#2d6b40", emoji:"🦉", message:"葉が、枯れていく。それでも、木はまだここに立っている。" },
+    { id:16, continent:"翠鐘樹の塔",   type:"場面", name:"倒木",    animal:"フクロウ",  act:"今ここ",        bg:"#071a0f", accent:"#55a06a", glow:"#2d6b40", emoji:"🦉", message:"巨木が、倒れた。それでも根は、まだ土の中にある。" },
+    { id:17, continent:"翠鐘樹の塔",   type:"場面", name:"木漏れ日", animal:"フクロウ", act:"今ここ",        bg:"#071a0f", accent:"#55a06a", glow:"#2d6b40", emoji:"🦉", message:"光が、静かに差し込んでいる。今日は、その光を受け取るだけでいい。" },
+    { id:18, continent:"翠鐘樹の塔",   type:"場面", name:"迷廊",    animal:"フクロウ",  act:"今ここ",        bg:"#071a0f", accent:"#55a06a", glow:"#2d6b40", emoji:"🦉", message:"螺旋階段を、歩き続けている。それでも、歩いた跡は残っている。" },
+    { id:19, continent:"翠鐘樹の塔",   type:"段階", name:"鐘響",    animal:"フクロウ",  act:"今ここ",        bg:"#071a0f", accent:"#55a06a", glow:"#2d6b40", emoji:"🦉", message:"鐘の音が、響いている。今、ここに戻る合図。" },
+    { id:20, continent:"翠鐘樹の塔",   type:"段階", name:"観葉",    animal:"フクロウ",  act:"今ここ",        bg:"#071a0f", accent:"#55a06a", glow:"#2d6b40", emoji:"🦉", message:"葉を、ただ見ている。視線は、今ここにある。" },
+    { id:21, continent:"翠鐘樹の塔",   type:"段階", name:"飛花",    animal:"フクロウ",  act:"今ここ",        bg:"#071a0f", accent:"#55a06a", glow:"#2d6b40", emoji:"🦉", message:"花びらが、風に乗っていく。軽く、離れていく。" },
+    { id:22, continent:"紅蓮機工街",   type:"場面", name:"残火",    animal:"オオカミ",  act:"行動",          bg:"#180504", accent:"#d44a1a", glow:"#8a2810", emoji:"🐺", message:"炉の火は、消えかけている。それでも、奥でまだ燻っている。" },
+    { id:23, continent:"紅蓮機工街",   type:"場面", name:"猛炎",    animal:"オオカミ",  act:"行動",          bg:"#180504", accent:"#d44a1a", glow:"#8a2810", emoji:"🐺", message:"炎が、制御を超えている。今は、近づきすぎなくていい。" },
+    { id:24, continent:"紅蓮機工街",   type:"場面", name:"熾火",    animal:"オオカミ",  act:"行動",          bg:"#180504", accent:"#d44a1a", glow:"#8a2810", emoji:"🐺", message:"炉の奥で、静かに燃え続けている。このままでいい。" },
+    { id:25, continent:"紅蓮機工街",   type:"場面", name:"狐火",    animal:"オオカミ",  act:"行動",          bg:"#180504", accent:"#d44a1a", glow:"#8a2810", emoji:"🐺", message:"火が、揺れている。すべての光が、道とは限らない。" },
+    { id:26, continent:"紅蓮機工街",   type:"段階", name:"火花",    animal:"オオカミ",  act:"行動",          bg:"#180504", accent:"#d44a1a", glow:"#8a2810", emoji:"🐺", message:"炉から、火花が跳ねる。小さくても、確かに光っている。" },
+    { id:27, continent:"紅蓮機工街",   type:"段階", name:"冷却",    animal:"オオカミ",  act:"行動",          bg:"#180504", accent:"#d44a1a", glow:"#8a2810", emoji:"🐺", message:"炉から、一歩離れる。見えなかったものが、見えてくる。" },
+    { id:28, continent:"紅蓮機工街",   type:"段階", name:"点火",    animal:"オオカミ",  act:"行動",          bg:"#180504", accent:"#d44a1a", glow:"#8a2810", emoji:"🐺", message:"炉に、火を入れる。歯車が、ゆっくり動き出す。" },
+    { id:29, continent:"白鋼機都",     type:"場面", name:"錆",      animal:"カメレオン", act:"受容",         bg:"#12161a", accent:"#c8d4dc", glow:"#8aaabb", emoji:"🦎", message:"機能が、少しずつ失われている。それでも、形はまだここにある。" },
+    { id:30, continent:"白鋼機都",     type:"場面", name:"反響",    animal:"カメレオン", act:"受容",         bg:"#12161a", accent:"#c8d4dc", glow:"#8aaabb", emoji:"🦎", message:"まだ受け入れられないものが、内側で響いている。今は、それでいい。" },
+    { id:31, continent:"白鋼機都",     type:"場面", name:"碧空",    animal:"カメレオン", act:"受容",         bg:"#12161a", accent:"#c8d4dc", glow:"#8aaabb", emoji:"🦎", message:"空は、澄み渡っている。視界は、もうひらけている。" },
+    { id:32, continent:"白鋼機都",     type:"場面", name:"空転",    animal:"カメレオン", act:"受容",         bg:"#12161a", accent:"#c8d4dc", glow:"#8aaabb", emoji:"🦎", message:"歯車が、空回りしている。今は、止めてもいい。" },
+    { id:33, continent:"白鋼機都",     type:"段階", name:"感知",    animal:"カメレオン", act:"受容",         bg:"#12161a", accent:"#c8d4dc", glow:"#8aaabb", emoji:"🦎", message:"センサーが、反応している。何かを、受け取っている。" },
+    { id:34, continent:"白鋼機都",     type:"段階", name:"鑑定",    animal:"カメレオン", act:"受容",         bg:"#12161a", accent:"#c8d4dc", glow:"#8aaabb", emoji:"🦎", message:"今すぐ、決めなくていい。じっくり、見極める時間がある。" },
+    { id:35, continent:"白鋼機都",     type:"段階", name:"受容",    animal:"カメレオン", act:"受容",         bg:"#12161a", accent:"#c8d4dc", glow:"#8aaabb", emoji:"🦎", message:"そのままで、いい。抗わなくていい。空は、今日も澄んでいる。" },
+    { id:36, continent:"灯澪",         type:"場面", name:"灯火",    animal:"猫",         act:"文脈としての自己", bg:"#080812", accent:"#c9a84c", glow:"#8a7030", emoji:"🐱", message:"ランタンが、静かに灯っている。ここにいていい。" },
+    { id:37, continent:"灯澪",         type:"場面", name:"余白",    animal:"猫",         act:"文脈としての自己", bg:"#080812", accent:"#c9a84c", glow:"#8a7030", emoji:"🐱", message:"何もしなくていい。この時間は、ここにある。" },
+    { id:38, continent:"灯澪",         type:"場面", name:"浮雲",    animal:"猫",         act:"文脈としての自己", bg:"#080812", accent:"#c9a84c", glow:"#8a7030", emoji:"🐱", message:"雲が、ゆっくり流れている。今日は、休んでいい。" },
+  ];
+
+  let currentCard = null;
+  let phase = "idle"; // idle | flipping | revealed
+
+  // Create particles
+  function createParticles(accent) {
+    const container = document.getElementById('particles');
+    container.innerHTML = '';
+    for (let i = 0; i < 28; i++) {
+      const p = document.createElement('div');
+      p.className = 'particle';
+      const size = Math.random() * 3 + 1;
+      p.style.cssText = `
+        width:${size}px; height:${size}px;
+        background:${accent};
+        opacity:${Math.random() * 0.6 + 0.1};
+        left:${Math.random() * 100}%;
+        top:${Math.random() * 100}%;
+        animation-duration:${Math.random() * 4 + 3}s;
+        animation-delay:${Math.random() * 3}s;
+      `;
+      container.appendChild(p);
+    }
+  }
+
+  function setAccent(accent, bg) {
+    document.body.style.background = bg;
+    document.getElementById('border-top').style.background =
+    document.getElementById('border-bottom').style.background =
+      `linear-gradient(90deg, transparent, ${accent}, transparent)`;
+    document.getElementById('title-label').style.color = accent;
+    createParticles(accent);
+  }
+
+  function applyCardColors(card) {
+    const a = card.accent;
+    // idle corners
+    document.querySelectorAll('#idle-card .corner').forEach(el => {
+      el.style.borderColor = a + '88';
+    });
+    // revealed card
+    document.getElementById('revealed-card').style.background =
+      `linear-gradient(180deg, ${card.bg} 0%, #000 60%, ${card.bg}88 100%)`;
+    document.getElementById('revealed-card').style.border = `1px solid ${a}88`;
+    document.getElementById('revealed-card').style.setProperty('--pulse-shadow-min', `0 0 20px ${card.glow}66`);
+    document.getElementById('revealed-card').style.setProperty('--pulse-shadow-max', `0 0 45px ${card.glow}99, 0 0 80px ${card.glow}44`);
+    document.getElementById('card-glow').style.background =
+      `radial-gradient(ellipse at 50% 60%, ${a}1a 0%, transparent 70%)`;
+    document.getElementById('card-inner-border').style.border = `1px solid ${a}44`;
+    document.querySelectorAll('.card-corner').forEach(el => {
+      el.style.borderColor = a + 'cc';
+    });
+    // name decorations
+    document.getElementById('card-name-text').style.textShadow = `0 0 20px ${a}bb, 0 0 40px ${a}44`;
+    document.querySelectorAll('#deco-left line, #deco-right line').forEach(el => el.setAttribute('stroke', a));
+    document.querySelectorAll('#deco-left path, #deco-right path').forEach(el => el.setAttribute('fill', a));
+    // compass
+    document.querySelectorAll('#compass-svg circle, #compass-svg line, #compass-svg polygon').forEach(el => {
+      el.setAttribute('stroke', a);
+      el.setAttribute('fill', a);
+    });
+    document.getElementById('card-continent').style.color = a;
+    // below card
+    document.getElementById('below-name-text').style.textShadow = `0 0 20px ${a}99`;
+    document.querySelectorAll('#ornament-svg line, #ornament-svg path, #ornament-svg circle').forEach(el => {
+      el.setAttribute('stroke', a);
+      el.setAttribute('fill', a);
+    });
+    // button
+    document.getElementById('btn-reset').style.border = `1px solid ${a}66`;
+    document.getElementById('btn-reset').style.color = a;
+  }
+
+  function formatMessage(msg) {
+    return msg.split('。').filter(s => s).map((s, i, arr) =>
+      s + '。' + (i < arr.length - 1 ? '<br>' : '')
+    ).join('');
+  }
+
+  function showPhase(p) {
+    document.getElementById('idle-card').classList.toggle('hidden', p !== 'idle');
+    document.getElementById('flip-card').classList.toggle('hidden', p !== 'flipping');
+    document.getElementById('card-wrap').classList.toggle('hidden', p !== 'revealed');
+    document.getElementById('btn-draw').classList.toggle('hidden', p !== 'idle');
+    document.getElementById('btn-reset').classList.toggle('hidden', p !== 'revealed');
+  }
+
+  function drawCard() {
+    if (phase === 'flipping') return;
+    phase = 'flipping';
+    showPhase('flipping');
+    document.getElementById('flip-icon').style.color = '#c9a84c';
+
+    setTimeout(() => {
+      currentCard = CARDS[Math.floor(Math.random() * CARDS.length)];
+      const c = currentCard;
+
+      setAccent(c.accent, c.bg);
+      applyCardColors(c);
+
+      document.getElementById('card-name-text').textContent = c.name;
+      document.getElementById('card-animal-bg').textContent = c.emoji;
+      document.getElementById('card-continent').textContent = c.continent;
+      document.getElementById('below-name-text').textContent = c.name;
+      document.getElementById('card-message').innerHTML = formatMessage(c.message);
+      document.getElementById('card-count').textContent = `${c.id} / ${CARDS.length}`;
+
+      // Reset animation
+      const wrap = document.getElementById('card-wrap');
+      wrap.style.animation = 'none';
+      wrap.offsetHeight;
+      wrap.style.animation = '';
+
+      phase = 'revealed';
+      showPhase('revealed');
+    }, 500);
+  }
+
+  function resetCard() {
+    phase = 'flipping';
+    showPhase('flipping');
+    setTimeout(() => {
+      currentCard = null;
+      setAccent('#c9a84c', '#06060f');
+      document.getElementById('card-count').textContent = `${CARDS.length}枚`;
+      phase = 'idle';
+      showPhase('idle');
+    }, 400);
+  }
+
+  // Init
+  setAccent('#c9a84c', '#06060f');
+  document.getElementById('idle-card').style.border = '1px solid rgba(201,168,76,0.27)';
+  document.getElementById('idle-card').style.background = 'rgba(255,255,255,0.02)';
+  document.getElementById('btn-draw').style.border = '1px solid rgba(201,168,76,0.53)';
+  document.getElementById('btn-draw').style.color = '#c9a84c';
+  document.getElementById('title-label').style.color = '#c9a84c';
+  document.getElementById('flip-icon').style.color = '#c9a84c';
+  showPhase('idle');
+  </script>
+</body>
+</html>

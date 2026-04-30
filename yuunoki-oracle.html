@@ -17,8 +17,8 @@
       font-family: 'Noto Serif JP', 'Hiragino Mincho ProN', serif;
       background: #06060f;
       position: relative;
-      overflow: hidden;
-      padding: 20px;
+      overflow-x: hidden;
+      padding: 20px 20px 40px;
       transition: background 0.8s ease;
     }
 
@@ -96,8 +96,8 @@
 
     /* Card area */
     #card-area {
-      width: clamp(260px, 80vw, 340px);
-      margin-bottom: 32px;
+      width: clamp(220px, 75vw, 340px);
+      margin-bottom: 24px;
     }
 
     /* Idle card (back face) */
@@ -295,7 +295,26 @@
       z-index: 1;
     }
 
+    @media (max-height: 700px) {
+      #title-area { margin-bottom: 16px; }
+      #title-main { font-size: 22px; }
+      #card-area  { width: clamp(180px, 60vw, 280px); margin-bottom: 16px; }
+      #below-card { gap: 8px; }
+    }
+
     .hidden { display: none !important; }
+
+    @media (max-height: 700px) {
+      #title-area { margin-bottom: 16px; }
+      #title-main { font-size: 22px; }
+      #card-area  { width: clamp(180px, 60vw, 280px); margin-bottom: 16px; }
+      #below-card { gap: 8px; }
+    }
+
+    @media (max-width: 390px) {
+      #card-message { font-size: 12px; line-height: 1.9; }
+      #below-name-text { font-size: 18px; }
+    }
   </style>
 </head>
 <body>
